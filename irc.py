@@ -18,6 +18,7 @@ class IRCError(Exception):
 
 class User:
     _users = {}
+    __slots__ = ['channels', 'socket', 'registered', 'now', 'ip', 'name', 'user', 'host']
     def __init__(self, sock):
         mode = ["i"]
         self.channels = []
@@ -35,7 +36,7 @@ class User:
         if self.registered:
             self.host = self.name + "!"+self.user + "@" + self.socket.getpeername()[0]
         User._users[self.name] = self
-    def user(self, user):
+    def register(self, user):
         self.user = user
         self.host = self.name + "!"+self.user + "@" + self.socket.getpeername()[0]
         if not self.registered: 

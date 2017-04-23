@@ -90,7 +90,7 @@ async def handle_line(user, raw_line):
                 await LOOP.sock_sendall(usr.socket,to_irc("NICK "+cmd[1], frm=user.host))
         user.nick(cmd[1])
     elif cmd[0] == "USER":
-        user.user(cmd[1])
+        user.register(cmd[1])
         await send_num(1,"Welcome")
         await send_num(2,"Welcome")
         await send_num(3,"Welcome")
@@ -121,11 +121,20 @@ async def handle_line(user, raw_line):
 async def irc_handler(client):
     log.info("Handling: " +str(client.getpeername()))
     user = User(client)
+    fragment = ""
     while True:
         data = await LOOP.sock_recv(client, 512)
         if not data:
             break
-        for line in data.decode().split("\r\n"):
+        lines = data.decode().split("\r\n")
+        if fragment:
+            lines[0] = fragment + lines[0]
+            fragment = ""
+
+        if not lines[-1].endswith("\r\n"):
+            fragment = lines.pop()
+
+        for line in lines:
             if line:
                 try:
                     await handle_line(user, line)
@@ -158,5 +167,5 @@ async def irc_server(address):
         LOOP.create_task(irc_handler(client))
 
 LOOP.create_task(irc_server(('', 6667)))
-LOOP.create_task(irc_server_ssl(('', 6697)))
+#LOOP.create_task(irc_server_ssl(('', 6697)))
 LOOP.run_forever()
